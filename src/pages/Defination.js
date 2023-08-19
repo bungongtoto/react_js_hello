@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { v4 as uuidv4 } from 'uuid';
 import NotFound from "../components/NotFound";
+import DefinationSearch from "../components/DefinationSearch";
 
 export default function Defination(){
     const [word, setWord] = useState();
@@ -46,7 +47,9 @@ export default function Defination(){
                             {meaning.definitions[0].definition}
                         </p>
                     );
-                })} 
+                })}
+                <p>Search Again:</p>
+                <DefinationSearch /> 
             </> : <p>Loading .....</p> }
         </>
     );
