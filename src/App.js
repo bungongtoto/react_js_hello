@@ -2,6 +2,7 @@ import Header from './components/Header';
 import NotFound from './components/NotFound';
 import './index.css';
 import Customers from './pages/Customers';
+import Customer from './pages/Customer';
 import Defination from './pages/Defination';
 import Dictionary from './pages/Dictionary';
 import Employees from './pages/Employees';
@@ -20,6 +21,7 @@ function App() {
             element={<Defination />} 
           />
           <Route path='/customers' element={<Customers />} />
+          <Route path='/customers/:id' element={<Customer />} />
           <Route path='/404' element={<NotFound />} />
           <Route path='*' element={<NotFound />} />
         </Routes>
