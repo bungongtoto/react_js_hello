@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import NotFound from "../components/NotFound";
 import { baseUrl } from "../shared";
+import { LoginContext } from "../App";
 
 
 export default function Customer(){
+    const [loggedIn, setLoggedIn] = useContext(LoginContext);
     const {id} = useParams();
     const navigate = useNavigate();
     const [customer, setCustomer] = useState();
@@ -12,6 +14,8 @@ export default function Customer(){
     const [notFound, setNotFound] = useState(false);
     const [changed, setChanged] = useState(false);
     const [error, setError] = useState();
+    const location = useLocation();
+    
 
 
     useEffect(() => {
@@ -31,7 +35,12 @@ export default function Customer(){
 
     useEffect(() => {
         const url = baseUrl + 'api/customers/' + id;
-        fetch(url)
+        fetch(url, {
+            headers: {
+                'Content-Type':'application/json',
+                Authorization: 'Bearer ' + localStorage.getItem('access'),
+            },
+        })
         .then((response) => {
             if(response.status === 404){
                 //redirect to 404 page (new URL)
@@ -40,6 +49,13 @@ export default function Customer(){
                 //render a 404 component in this page
                 setNotFound(true)
                 return null;
+            } else if (response.status === 401){
+                setLoggedIn(false);
+                navigate('/login', {
+                    state: {
+                        previousUrl : location.pathname,
+                    },
+                });
             }
 
             if (!response.ok) throw new Error('somethinng went wrong, try again later');
@@ -66,9 +82,18 @@ export default function Customer(){
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                Authorization: 'Bearer ' + localStorage.getItem('access'),
             },
             body: JSON.stringify(tempCustomer)
         }).then((response) => {
+            if (response.status === 401){
+                setLoggedIn(false);
+                navigate('/login', {
+                    state: {
+                        previousUrl : location.pathname,
+                    },
+                });
+            }
             if (!response.ok) throw new Error('somethinng went wrong');
             return response.json();
         }).then((data)=>{
@@ -132,16 +157,27 @@ export default function Customer(){
             <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
                 onClick={() => {
                 const url = baseUrl + 'api/customers/' + id;
-                fetch(url, {method: 'DELETE', 
-                            heaeder: {
+                fetch(url, {
+                            method: 'DELETE',
+                            headers: {
                                 'Content-Type': 'application/json',
-                            },
+                                Authorization: 'Bearer ' + localStorage.getItem('access'),
+                            }, 
+                            
                         }).then((response) => {
-                    if(!response.ok){
-                        throw new Error('Something went wrong')
-                    }
-                    navigate('/customers');
-                    //assume things went well
+                            setLoggedIn(false);
+                            if (response.status === 401){
+                                navigate('/login', {
+                                    state: {
+                                        previousUrl : location.pathname,
+                                    },
+                                });
+                            }
+                            if(!response.ok){
+                                throw new Error('Something went wrong')
+                            }
+                            navigate('/customers');
+                            //assume things went well
                 }).catch((e) => {
                     console.log(e);
                 });  

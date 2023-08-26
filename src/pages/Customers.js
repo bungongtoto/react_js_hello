@@ -1,22 +1,42 @@
-import { useEffect, useState } from "react"
-import { Link, json } from "react-router-dom";
+import { useContext, useEffect, useState } from "react"
+import { Link, json, useLocation, useNavigate } from "react-router-dom";
 import AddCustomer from "../components/AddCustomer";
 import { baseUrl } from "../shared";
+import { LoginContext } from "../App";
 
 export default function Customers(){
+    const [loggedIn, setLoggedIn] = useContext(LoginContext);
     const [customers, setCustomers] = useState();
     const [show, setShow] = useState(false);
+
+    const navigate = useNavigate();
+    const location = useLocation();
 
     function toggleShow(){
         setShow(!show);
     }
 
     useEffect(() => {
-        console.log('fetching')
-        fetch('http://127.0.0.1:8000/api/customers/')
-        .then((response) => response.json())
+        const url = baseUrl + 'api/customers/';
+        fetch(url, {
+            headers: {
+                'Content-Type':'application/json',
+                Authorization: 'Bearer ' + localStorage.getItem('access'),
+            },
+        })
+        .then((response) => {
+            if(response.status === 401){
+                setLoggedIn(false);
+                navigate('/login', {
+                    state: {
+                        previousUrl : location.pathname,
+                    },
+                });
+            }
+            return response.json()
+        })
         .then((data) => {
-            setCustomers(data.customers)
+             data ? setCustomers(data.customers) : setCustomers(null);
         });
     }, []);
 
@@ -26,10 +46,18 @@ export default function Customers(){
         fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json', 
+                Authorization: 'Bearer ' + localStorage.getItem('access'),
             },
             body: JSON.stringify(data)
         }).then((response) => {
+            if(response.status === 401){
+                navigate('/login', {
+                    state: {
+                        previousUrl : location.pathname,
+                    },
+                });
+            }
             if(!response.ok){
                 throw new Error('Something went wrong')
             }
